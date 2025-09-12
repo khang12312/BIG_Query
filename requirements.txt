@@ -1,0 +1,69 @@
+# Core BigQuery and Data Processing - UPDATED
+google-cloud-bigquery==3.25.0
+bigframes==1.0.0
+pandas==2.2.2
+pandas-gbq==0.19.2
+numpy==1.26.4
+
+# Web Framework and API - UPDATED
+flask==3.0.3
+flask-socketio==5.3.6
+flask-limiter==3.5.0
+gunicorn==21.2.0
+PyJWT==2.8.0
+cryptography==42.0.5
+
+# Machine Learning and NLP - UPDATED
+scikit-learn==1.4.2
+spacy==3.7.4
+nltk==3.8.1
+textstat==0.7.3
+transformers==4.37.2
+torch==2.2.1
+
+# Data Visualization - UPDATED
+matplotlib==3.8.3
+seaborn==0.13.2
+plotly==5.19.0
+wordcloud==1.9.3
+
+# Document Processing - UPDATED
+PyPDF2==3.0.1
+python-docx==1.1.0
+Pillow==10.2.0
+
+# Development and Testing - UPDATED
+jupyter==1.0.0
+pytest==8.0.2
+pytest-cov==4.1.0
+pytest-asyncio==0.23.5
+flake8==7.0.0
+black==24.2.0
+isort==5.13.2
+mypy==1.8.0
+locust==2.24.0
+
+# Production and Monitoring - UPDATED
+redis==5.0.3
+prometheus-client==0.20.0
+psutil==5.9.8
+celery==5.3.6
+flower==2.0.1
+
+# Security - UPDATED
+bandit==1.7.7
+safety==3.0.1
+
+# Utilities - UPDATED
+python-dotenv==1.0.1
+requests==2.31.0
+urllib3==2.2.1
+pydantic==2.6.3
+fastapi==0.109.2
+
+# New Additions for Enhanced Features
+opentelemetry-api==1.22.0
+opentelemetry-sdk==1.22.0
+structlog==24.1.0
+typer==0.9.0
+rich==13.7.0

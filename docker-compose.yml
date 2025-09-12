@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # Main web application
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/divine-catalyst-459423-j5-6b5f13aeff7c.json
+      - GOOGLE_CLOUD_PROJECT=divine-catalyst-459423-j5
+      - FLASK_ENV=production
+      - ENVIRONMENT=production
+      - API_SECRET_KEY=${API_SECRET_KEY:-your-secret-key-here}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./divine-catalyst-459423-j5-6b5f13aeff7c.json:/app/credentials/divine-catalyst-459423-j5-6b5f13aeff7c.json:ro
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # REST API service
+  api:
+    build: .
+    command: ["python", "src/api.py"]
+    ports:
+      - "5001:5001"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/divine-catalyst-459423-j5-6b5f13aeff7c.json
+      - GOOGLE_CLOUD_PROJECT=divine-catalyst-459423-j5
+      - FLASK_ENV=production
+      - ENVIRONMENT=production
+      - API_SECRET_KEY=${API_SECRET_KEY:-your-secret-key-here}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./divine-catalyst-459423-j5-6b5f13aeff7c.json:/app/credentials/divine-catalyst-459423-j5-6b5f13aeff7c.json:ro
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+  # Background worker for processing
+  worker:
+    build: .
+    command: ["python", "src/worker.py"]
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/divine-catalyst-459423-j5-6b5f13aeff7c.json
+      - GOOGLE_CLOUD_PROJECT=divine-catalyst-459423-j5
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./divine-catalyst-459423-j5-6b5f13aeff7c.json:/app/credentials/divine-catalyst-459423-j5-6b5f13aeff7c.json:ro
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: resume-matcher-network

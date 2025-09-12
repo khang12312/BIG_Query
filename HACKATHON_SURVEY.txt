@@ -1,0 +1,48 @@
+BigQuery AI Hackathon - User Survey Response
+
+1. BigQuery AI Experience per Team Member:
+   - Team Lead: 6 months experience with BigQuery AI functions
+   - Developer 1: 3 months experience with ML.GENERATE_EMBEDDING
+   - Developer 2: 2 months experience with VECTOR_SEARCH
+   - Data Scientist: 4 months experience with AI.GENERATE functions
+
+2. Google Cloud Experience per Team Member:
+   - Team Lead: 24 months comprehensive Google Cloud experience
+   - Developer 1: 12 months BigQuery and Cloud Storage experience  
+   - Developer 2: 8 months BigQuery and Compute Engine experience
+   - Data Scientist: 18 months BigQuery ML and AI Platform experience
+
+3. Feedback on BigQuery AI Experience:
+
+POSITIVE ASPECTS:
+- Seamless SQL integration: AI functions work naturally within existing SQL workflows
+- Powerful embedding generation: text-embedding-004 model produces high-quality vectors
+- Efficient vector search: VECTOR_SEARCH function handles large datasets excellently
+- Intuitive AI.GENERATE functions: Easy to create personalized content at scale
+- Excellent documentation: Clear examples and comprehensive guides available
+- Performance optimization: Vector indexes significantly improve search speed
+- Cost-effective: Pay-per-use model makes experimentation affordable
+- Multimodal capabilities: Object tables enable rich document analysis
+
+AREAS FOR IMPROVEMENT:
+- Error messaging: AI function failures need more descriptive error messages
+- Model selection: Limited choice of embedding models compared to other platforms
+- Debugging tools: Need better tools to troubleshoot AI function performance
+- Rate limiting: Clearer documentation on API limits and throttling
+- Advanced features: More control over model parameters and fine-tuning options
+- Integration examples: More real-world use cases and integration patterns
+- Performance monitoring: Better metrics for AI function execution times
+- Batch processing: Improved support for large-scale batch AI operations
+
+SPECIFIC TECHNICAL FEEDBACK:
+- ML.GENERATE_EMBEDDING works exceptionally well for text vectorization
+- VECTOR_SEARCH performance is excellent with proper indexing
+- AI.GENERATE produces high-quality, contextually relevant responses
+- Object tables integration with multimodal analysis is innovative
+- BigFrames Python integration makes development workflow smooth
+- Cross-region replication for AI models would improve global performance
+
+OVERALL EXPERIENCE:
+BigQuery AI has transformed our approach to data analysis and application development. The ability to perform sophisticated AI operations directly within SQL has eliminated complex data pipeline requirements and reduced development time significantly. The semantic search capabilities have opened new possibilities for intelligent applications that were previously difficult to implement at scale.
+
+The hackathon experience has been excellent, pushing us to explore all three approaches and discover innovative ways to combine generative AI, vector search, and multimodal analysis. BigQuery AI is genuinely building the future of data analytics.

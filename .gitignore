@@ -1,0 +1,17 @@
+# Credentials
+*.json
+
+# Python
+__pycache__/
+*.pyc
+src/config.py
+
+# Environment
+.env
+venv/
+
+# Logs
+*.log
+
+# Notebooks
+.ipynb_checkpoints/

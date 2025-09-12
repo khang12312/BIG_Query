@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Resume Matcher{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+    </h1>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary" onclick="refreshStats()">
+            <i class="fas fa-sync me-1"></i>Refresh
+        </button>
+        <button type="button" class="btn btn-primary" onclick="runQuickMatch()">
+            <i class="fas fa-bolt me-1"></i>Quick Match
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number" id="total-resumes">{{ stats.total_resumes or 0 }}</div>
+                <div class="stat-label">Total Resumes</div>
+                <small class="opacity-75">
+                    <i class="fas fa-arrow-up me-1"></i>{{ stats.recent_resumes or 0 }} this week
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <div class="card-body text-center">
+                <div class="stat-number" id="total-jobs">{{ stats.total_jobs or 0 }}</div>
+                <div class="stat-label">Job Postings</div>
+                <small class="opacity-75">
+                    <i class="fas fa-briefcase me-1"></i>Active listings
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <div class="card-body text-center">
+                <div class="stat-number" id="total-matches">{{ stats.total_matches or 0 }}</div>
+                <div class="stat-label">Total Matches</div>
+                <small class="opacity-75">
+                    <i class="fas fa-percentage me-1"></i>{{ formatPercentage(stats.avg_match_score or 0) }} avg score
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <div class="card-body text-center">
+                <div class="stat-number" id="success-rate">{{ formatPercentage(stats.success_rate or 0.75) }}</div>
+                <div class="stat-label">Success Rate</div>
+                <small class="opacity-75">
+                    <i class="fas fa-check-circle me-1"></i>Match quality
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Matching Trends
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" onclick="updateChart('7d')">7D</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="updateChart('30d')">30D</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="updateChart('90d')">90D</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="trendsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>Skills Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="skillsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Quick Actions -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Activity
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadRecentActivity()">
+                    <i class="fas fa-sync me-1"></i>Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="recent-activity">
+                    <div class="text-center py-3">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="startNewMatch()">
+                        <i class="fas fa-search me-2"></i>Start New Match
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="uploadResume()">
+                        <i class="fas fa-upload me-2"></i>Upload Resume
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="uploadJob()">
+                        <i class="fas fa-briefcase me-2"></i>Upload Job Posting
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="viewAnalytics()">
+                        <i class="fas fa-chart-bar me-2"></i>View Analytics
+                    </button>
+                </div>
+                
+                <hr class="my-3">
+                
+                <h6 class="text-muted mb-2">System Status</h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>BigQuery Connection</span>
+                    <span class="badge bg-success" id="bq-status">
+                        <i class="fas fa-check me-1"></i>Connected
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>AI Models</span>
+                    <span class="badge bg-success" id="ai-status">
+                        <i class="fas fa-check me-1"></i>Active
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Last Update</span>
+                    <small class="text-muted" id="last-update">{{ moment().format('HH:mm') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Updates -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-broadcast-tower me-2"></i>Real-time Updates
+                </h5>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="realtime-toggle" checked>
+                    <label class="form-check-label" for="realtime-toggle">
+                        Enable real-time
+                    </label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="realtime-feed" class="realtime-feed">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-wifi me-2"></i>Real-time updates will appear here
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .realtime-feed {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .activity-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-time {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+    
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+    }
+    
+    .activity-icon.match {
+        background-color: #dbeafe;
+        color: #2563eb;
+    }
+    
+    .activity-icon.upload {
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .activity-icon.analysis {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize charts
+    let trendsChart, skillsChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+        loadRecentActivity();
+        setupRealtimeUpdates();
+        refreshStats();
+    });
+    
+    function initializeCharts() {
+        // Trends Chart
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        trendsChart = new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Matches',
+                    data: [12, 19, 3, 5, 2, 3, 8],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Uploads',
+                    data: [8, 15, 7, 12, 6, 4, 10],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Skills Chart
+        const skillsCtx = document.getElementById('skillsChart').getContext('2d');
+        skillsChart = new Chart(skillsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Python', 'JavaScript', 'Java', 'React', 'SQL', 'Other'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 5, 5],
+                    backgroundColor: [
+                        '#2563eb',
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#8b5cf6',
+                        '#64748b'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+    
+    function updateChart(period) {
+        // Update chart based on selected period
+        console.log('Updating chart for period:', period);
+        
+        // Update button states
+        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+    
+    function refreshStats() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('Error loading statistics: ' + data.error, 'danger');
+                    return;
+                }
+                
+                // Update stat cards
+                document.getElementById('total-resumes').textContent = formatNumber(data.total_resumes || 0);
+                document.getElementById('total-jobs').textContent = formatNumber(data.total_jobs || 0);
+                document.getElementById('total-matches').textContent = formatNumber(data.total_matches || 0);
+                
+                // Update last update time
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Failed to load statistics', 'danger');
+            });
+    }
+    
+    function loadRecentActivity() {
+        const container = document.getElementById('recent-activity');
+        
+        // Mock recent activity data
+        const activities = [
+            {
+                type: 'match',
+                message: 'New match found for Senior Data Scientist position',
+                time: '2 minutes ago',
+                icon: 'fas fa-search'
+            },
+            {
+                type: 'upload',
+                message: 'Resume uploaded: John Smith - Software Engineer',
+                time: '5 minutes ago',
+                icon: 'fas fa-upload'
+            },
+            {
+                type: 'analysis',
+                message: 'Bias analysis completed for recent matches',
+                time: '10 minutes ago',
+                icon: 'fas fa-chart-bar'
+            },
+            {
+                type: 'match',
+                message: 'Match score improved for Sarah Johnson',
+                time: '15 minutes ago',
+                icon: 'fas fa-search'
+            }
+        ];
+        
+        container.innerHTML = activities.map(activity => `
+            <div class="activity-item d-flex align-items-center">
+                <div class="activity-icon ${activity.type}">
+                    <i class="${activity.icon}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-medium">${activity.message}</div>
+                    <div class="activity-time">${activity.time}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function setupRealtimeUpdates() {
+        const feed = document.getElementById('realtime-feed');
+        const toggle = document.getElementById('realtime-toggle');
+        
+        toggle.addEventListener('change', function() {
+            if (this.checked) {
+                socket.emit('join_room', { room: 'dashboard' });
+                feed.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-wifi me-2"></i>Real-time updates enabled</div>';
+            } else {
+                socket.emit('leave_room', { room: 'dashboard' });
+                feed.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-wifi-slash me-2"></i>Real-time updates disabled</div>';
+            }
+        });
+        
+        // Listen for real-time updates
+        socket.on('match_results', function(data) {
+            if (toggle.checked) {
+                const updateDiv = document.createElement('div');
+                updateDiv.className = 'alert alert-info alert-dismissible fade show';
+                updateDiv.innerHTML = `
+                    <i class="fas fa-search me-2"></i>
+                    Found ${data.matches.length} matches for job ${data.job_id}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                feed.insertBefore(updateDiv, feed.firstChild);
+                
+                // Keep only last 5 updates
+                while (feed.children.length > 5) {
+                    feed.removeChild(feed.lastChild);
+                }
+            }
+        });
+        
+        socket.on('status', function(data) {
+            console.log('Socket status:', data.msg);
+        });
+    }
+    
+    // Quick action functions
+    function runQuickMatch() {
+        showAlert('Running quick match analysis...', 'info');
+        // Implement quick match logic
+    }
+    
+    function startNewMatch() {
+        window.location.href = '/match';
+    }
+    
+    function uploadResume() {
+        window.location.href = '/upload?type=resume';
+    }
+    
+    function uploadJob() {
+        window.location.href = '/upload?type=job';
+    }
+    
+    function viewAnalytics() {
+        window.location.href = '/analytics';
+    }
+    
+    // Auto-refresh stats every 30 seconds
+    setInterval(refreshStats, 30000);
+    
+    // Auto-refresh activity every 60 seconds
+    setInterval(loadRecentActivity, 60000);
+</script>
+{% endblock %}
