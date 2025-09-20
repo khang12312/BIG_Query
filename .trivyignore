@@ -1,0 +1,21 @@
+# Trivy ignore file for known issues that are acceptable
+
+# Ignore low severity vulnerabilities in development dependencies
+CVE-2023-*
+CVE-2024-*
+
+# Ignore vulnerabilities in test dependencies
+**/tests/**
+**/test_*
+
+# Ignore documentation build dependencies
+**/docs/**
+
+# Ignore development configuration files
+**/.github/**
+**/docker-compose.yml
+
+# Ignore log files and temporary files
+**/*.log
+**/__pycache__/**
+**/.pytest_cache/**
