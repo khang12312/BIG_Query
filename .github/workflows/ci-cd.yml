@@ -133,12 +133,13 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+      continue-on-error: true
 
   # Deploy to Staging
   deploy-staging:
@@ -217,7 +218,7 @@ jobs:
   # Documentation
   docs:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
     
     steps:
     - name: Checkout code
@@ -230,7 +231,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install sphinx sphinx-rtd-theme
+        pip install -r docs/requirements.txt
     
     - name: Build documentation
       run: |

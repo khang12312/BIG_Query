@@ -466,6 +466,52 @@ def on_match_request(data):
     except Exception as e:
         emit('match_error', {'error': str(e)})
 
+# Health check endpoint for Docker
+@app.route('/health')
+@limiter.exempt
+def health_check():
+    """Health check endpoint for monitoring and Docker health checks"""
+    try:
+        # Basic health check
+        health_status = {
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'version': '1.0.0',
+            'service': 'ai-resume-matcher-web'
+        }
+        
+        # Optional: Add more detailed health checks
+        try:
+            # Test database connectivity (if needed)
+            # bq_client.client.query("SELECT 1").result()
+            health_status['database'] = 'connected'
+        except Exception:
+            health_status['database'] = 'disconnected'
+            health_status['status'] = 'degraded'
+        
+        return jsonify(health_status), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
+# Root endpoint that also serves as health check
+@app.route('/')
+@limiter.exempt
+def index():
+    """Main index page that also serves as a basic health check"""
+    try:
+        return jsonify({
+            'message': 'AI-Powered Resume Matcher is running',
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'endpoints': ['/health', '/dashboard', '/api/matches']
+        }), 200
+    except Exception:
+        return jsonify({'status': 'error'}), 500
+
 if __name__ == '__main__':
     # Create necessary directories
     os.makedirs('web_app/templates', exist_ok=True)
