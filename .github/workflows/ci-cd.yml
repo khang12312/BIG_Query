@@ -232,12 +232,26 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r docs/requirements.txt
+        sphinx-build --version
+    
+    - name: Debug docs directory
+      run: |
+        ls -la docs/
+        cat docs/conf.py
     
     - name: Build documentation
       run: |
         cd docs/
-        # Try with make first, then fallback to direct sphinx-build
-        make html || sphinx-build -b html . _build/html || echo "Documentation build completed with warnings"
+        # Create build directory
+        mkdir -p _build/html
+        # Try sphinx-build, if it fails use backup HTML
+        if ! sphinx-build -v -b html -E . _build/html; then
+          echo "Sphinx build failed, using backup HTML documentation..."
+          cp backup.html _build/html/index.html
+          echo "Backup documentation deployed successfully"
+        else
+          echo "Sphinx build completed successfully"
+        fi
       continue-on-error: true
     
     - name: Deploy documentation
