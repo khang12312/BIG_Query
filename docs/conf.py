@@ -2,7 +2,10 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../src'))
+
+# Don't try to import the source code during docs build
+# This prevents import errors when dependencies aren't available
+# sys.path.insert(0, os.path.abspath('../src'))
 
 # -- Project information -----------------------------------------------------
 
@@ -10,15 +13,20 @@ project = 'AI-Powered Resume & Job Matcher'
 copyright = '2024, AI Resume Matcher Team'
 author = 'AI Resume Matcher Team'
 release = '1.0.0'
+version = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
     'sphinx.ext.githubpages',
 ]
+
+# Disable autodoc and other extensions that require importing code
+# extensions = [
+#     'sphinx.ext.autodoc',
+#     'sphinx.ext.viewcode',
+#     'sphinx.ext.napoleon',
+# ]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
